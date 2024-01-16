@@ -16,6 +16,7 @@ namespace SignalRChatServer.Hubs
 
 			ClientData.AllClients.Add(client);
 			await Clients.Others.SendAsync("userJoined", userName);
+			await Clients.All.SendAsync("getClients", ClientData.AllClients);
 		}
 	}
 }

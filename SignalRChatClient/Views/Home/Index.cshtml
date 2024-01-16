@@ -22,9 +22,9 @@
 			<div>
 				<h3>Create Room</h3>
 				<br />
-				<input type="text" placeholder="Room Name" class="form-control" id="roomName" />
+				<input type="text" placeholder="Room Name" class="form-control disabled" id="roomName" />
 				<br />
-				<button type="button" class="btn btn-light btn-outline-dark">Add Room</button>
+				<button type="button" class="btn btn-light btn-outline-dark" disabled>Add Room</button>
 			</div>
 		</div>
 	</div>
@@ -36,22 +36,19 @@
 		<br />
 		<div>
 			<label for="exampleFormControlTextarea1" class="form-label">Write your message...</label>
-			<textarea class="form-control" id="exampleFormControlTextarea1" rows="2"></textarea>
+			<textarea class="form-control disabled" id="exampleFormControlTextarea1" rows="2"></textarea>
 			<br />
 			<div style="display:flex; justify-content: right;">
-				<button type="button" class="btn btn-light btn-outline-dark">Send</button>
+				<button type="button" class="btn btn-light btn-outline-dark" disabled>Send</button>
 			</div>
 		</div>
 	</div>
 	<div class="col-md-3 col-lg-3">
 		<h3>Online Users</h3>
-		<ul class="list-group">
-			<li class="list-group-item">Cras justo odio</li>
-			<li class="list-group-item">Dapibus ac facilisis in</li>
-			<li class="list-group-item">Morbi leo risus</li>
-			<li class="list-group-item">Porta ac consectetur ac</li>
-			<li class="list-group-item">Vestibulum at eros</li>
-		</ul>
+		<div class="list-group" id="userList" role="tablist">
+			<a href="#" class="list-group-item list-group-item-action" id="users"  data-toggle="list" role="tab">All</a>
+			<div href="#" class="list-group-item list-group-item-action" id="_users" data-toggle="list" role="tab"></div>
+		</div>
 		<br />
 		<h3>Active Rooms</h3>
 		<div class="list-group" id="roomList" role="tablist">
@@ -67,13 +64,20 @@
 	<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
 	<script>
 		$(document).ready(() => {
+
 			const hubConnection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44327/chathub").build();
 
 			hubConnection.start();
 
+			$(".disabled").attr("disabled", "disabled");
+
 			$("#joinBtn").click(() => {
 				const userName = $("#userName").val();
 				hubConnection.invoke("GetUserName", userName).catch(error => console.log(error));
+				$(".disabled").removeAttr("disabled");
+				$(".btn").removeAttr("disabled");
+				$("#joinBtn").prop("disabled", true);
+				$("#userName").prop("disabled", true);
 			});
 
 			hubConnection.on("userJoined", userName => {
@@ -83,6 +87,20 @@
 						$("#userActivityInfo").fadeOut(2000);
 					}, 2000);
 				})
+			});
+
+			hubConnection.on("getClients", clients => {
+				$("#_users").html("");
+				$.each(clients, (index, item) => {
+					const user = $("#users").first().clone();
+					user.html(item.userName);
+					$("#_users").append(user);
+				});
+			});
+
+			$('body').on('click', '#users', function (e) {
+				e.preventDefault();
+				$(this).toggleClass('active');
 			});
 
 			$('#roomList a').on('click', function (e) {
