@@ -31,23 +31,31 @@
 	<div class="col-md-6 col-lg-6" style="background-color:lavender;">
 		<br />
 		<div style="height: 60%; background-color: white;" class="overflow-auto form-control">
-			HELLO
+			<div class="list-group messages">
+				<a href="#" class="list-group-item list-group-item-action message">
+					<div class="d-flex w-100 justify-content-between">
+						<h5 class="mb-1"></h5>
+						<h5 class="mb-1"></h5>
+					</div>
+					<p class="mb-1"></p>
+				</a>
+			</div>
 		</div>
 		<br />
 		<div>
-			<label for="exampleFormControlTextarea1" class="form-label">Write your message...</label>
-			<textarea class="form-control disabled" id="exampleFormControlTextarea1" rows="2"></textarea>
+			<label for="msgArea" class="form-label">Write your message...</label>
+			<textarea class="form-control disabled" id="msgArea" rows="2"></textarea>
 			<br />
 			<div style="display:flex; justify-content: right;">
-				<button type="button" class="btn btn-light btn-outline-dark" disabled>Send</button>
+				<button type="button" class="btn btn-light btn-outline-dark" id="sendMsgBtn" disabled>Send</button>
 			</div>
 		</div>
 	</div>
 	<div class="col-md-3 col-lg-3">
 		<h3>Online Users</h3>
 		<div class="list-group" id="userList" role="tablist">
-			<a href="#" class="list-group-item list-group-item-action" id="users"  data-toggle="list" role="tab">All</a>
-			<div href="#" class="list-group-item list-group-item-action" id="_users" data-toggle="list" role="tab"></div>
+			<a href="#" class="list-group-item list-group-item-action users" data-toggle="list" role="tab">All</a>
+			<div id="_users"></div>
 		</div>
 		<br />
 		<h3>Active Rooms</h3>
@@ -92,20 +100,41 @@
 			hubConnection.on("getClients", clients => {
 				$("#_users").html("");
 				$.each(clients, (index, item) => {
-					const user = $("#users").first().clone();
+					const user = $(".users").first().clone();
 					user.html(item.userName);
 					$("#_users").append(user);
 				});
 			});
 
-			$('body').on('click', '#users', function (e) {
-				e.preventDefault();
-				$(this).toggleClass('active');
+			$('body').on('click', '.users', function (e) {
+				$(".users").each((index, item) => {
+					$(item).removeClass("active");
+				});
+				$(this).addClass("active");
 			});
 
 			$('#roomList a').on('click', function (e) {
 				e.preventDefault();
 				$(this).toggleClass('active');
+			});
+
+			$("#sendMsgBtn").click(() => {
+				const clientName = $(".users.active").first().html();
+				const message = $("#msgArea").val();
+				hubConnection.invoke("SendMessageAsync", message, clientName).catch(error => console.log(error));
+				const msg = $(".message").clone();
+				msg.removeClass("message");
+				msg.find("p").html(message);
+				msg.find("div h5")[1].innerHTML = "You";
+				$(".messages").append(msg);
+			});
+
+			hubConnection.on("receiveMessage", (message, username) => {
+				const msg = $(".message").clone();
+				msg.removeClass("message");
+				msg.find("p").html(message);
+				msg.find("div h5")[0].innerHTML = username;
+				$(".messages").append(msg);
 			});
 		});
 	</script>
