@@ -24,7 +24,7 @@
 				<br />
 				<input type="text" placeholder="Room Name" class="form-control disabled" id="roomName" />
 				<br />
-				<button type="button" class="btn btn-light btn-outline-dark" disabled>Add Room</button>
+				<button id="addRoomBtn" type="button" class="btn btn-light btn-outline-dark" disabled>Add Room</button>
 			</div>
 		</div>
 	</div>
@@ -37,7 +37,7 @@
 						<h5 class="mb-1"></h5>
 						<h5 class="mb-1"></h5>
 					</div>
-					<p class="mb-1"></p>
+					<p class="mb-1">MESSAGES</p>
 				</a>
 			</div>
 		</div>
@@ -59,11 +59,11 @@
 		</div>
 		<br />
 		<h3>Active Rooms</h3>
-		<div class="list-group" id="roomList" role="tablist">
-			<a href="#" class="list-group-item list-group-item-action" data-toggle="list" role="tab">Item 1</a>
-			<a href="#" class="list-group-item list-group-item-action" data-toggle="list" role="tab">Item 2</a>
-			<a href="#" class="list-group-item list-group-item-action" data-toggle="list" role="tab">Item 3</a>
+		<div class="list-group" id="userList" role="tablist">
+			<a href="#" class="list-group-item list-group-item-action rooms" data-toggle="list" role="tab">All</a>
+			<div id="_rooms"></div>
 		</div>
+		<button id="joinRoomBtn" type="button" class="btn btn-light btn-outline-dark" disabled>Join Selected Room</button>
 	</div>
 </div>
 
@@ -73,12 +73,14 @@
 	<script>
 		$(document).ready(() => {
 
+			// build and start Signal R connection between client and hub
 			const hubConnection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44327/chathub").build();
 
 			hubConnection.start();
 
 			$(".disabled").attr("disabled", "disabled");
 
+			// send client's user name to hub
 			$("#joinBtn").click(() => {
 				const userName = $("#userName").val();
 				hubConnection.invoke("GetUserName", userName).catch(error => console.log(error));
@@ -88,6 +90,7 @@
 				$("#userName").prop("disabled", true);
 			});
 
+			// get new client's name from hub and show a notification message on screen
 			hubConnection.on("userJoined", userName => {
 				$("#userActivityInfo").html(userName + " has just joined!")
 				$("#userActivityInfo").fadeIn(5000, () => {
@@ -97,6 +100,7 @@
 				})
 			});
 
+			// get all users from hub
 			hubConnection.on("getClients", clients => {
 				$("#_users").html("");
 				$.each(clients, (index, item) => {
@@ -113,11 +117,7 @@
 				$(this).addClass("active");
 			});
 
-			$('#roomList a').on('click', function (e) {
-				e.preventDefault();
-				$(this).toggleClass('active');
-			});
-
+			// send message and receiver client name to hub
 			$("#sendMsgBtn").click(() => {
 				const clientName = $(".users.active").first().html();
 				const message = $("#msgArea").val();
@@ -129,12 +129,42 @@
 				$(".messages").append(msg);
 			});
 
+			// receive sent messages through hub
 			hubConnection.on("receiveMessage", (message, username) => {
 				const msg = $(".message").clone();
 				msg.removeClass("message");
 				msg.find("p").html(message);
 				msg.find("div h5")[0].innerHTML = username;
 				$(".messages").append(msg);
+			});
+
+			// send new room's name to hub
+			$("#addRoomBtn").click(() => {
+				const roomName = $("#roomName").val();
+				hubConnection.invoke("AddGroup", roomName).catch(error => console.log(error));
+			});
+
+			// get all rooms from hub
+			hubConnection.on("getRooms", rooms => {
+				$("#_rooms").html("");
+				$.each(rooms, (index, item) => {
+					const room = $(".rooms").first().clone();
+					room.html(item.groupName);
+					$("#_rooms").append(room);
+				});
+			});
+
+			$('body').on('click', '.rooms', function (e) {
+				$(".rooms").each((index, item) => {
+					$(item).removeClass("active");
+				});
+				$(this).addClass("active");
+			});
+
+			// send selected room's name to hub for being added to group
+			$("#joinRoomBtn").click(() => {
+				const roomName = $(".rooms.active").first().html();
+				hubConnection.invoke("AddClientToGroup", roomName).catch(error => console.log(error));
 			});
 		});
 	</script>
