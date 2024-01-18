@@ -159,13 +159,25 @@
 					$(item).removeClass("active");
 				});
 				$(this).addClass("active");
+				hubConnection.invoke("GetClientsInGroup", $(this).text()).catch(error => console.log(error));
 			});
 
 			// send selected room's name to hub for being added to group
 			$("#joinRoomBtn").click(() => {
-				const roomName = $(".rooms.active").first().html();
-				hubConnection.invoke("AddClientToGroup", roomName).catch(error => console.log(error));
+				var roomName = $(".rooms.active").first().html();
+
+				console.log("room name : " + roomName);
+
+				if(roomName == "All") {
+					alert("Please select a room!");
+				}
+				else
+				{
+					hubConnection.invoke("AddClientToGroup", roomName).catch(error => console.log(error));
+				}
+
 			});
+
 		});
 	</script>
 }
