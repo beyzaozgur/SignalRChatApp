@@ -21,18 +21,40 @@ namespace SignalRChatServer.Hubs
 
 		public async Task SendMessageAsync(string message, string userName)
 		{
-			userName = userName.Trim();
-
-			Client sender = ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
-
-			if (userName == "All")
+			if(!string.IsNullOrEmpty(userName))
 			{
-				await Clients.Others.SendAsync("receiveMessage", message, sender.UserName);
+				userName = userName.Trim();
+
+				Client sender = ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
+
+				if (userName == "All")
+				{
+					await Clients.Others.SendAsync("receiveMessage", message, sender.UserName);
+				}
+				else
+				{
+					Client client = ClientData.AllClients.FirstOrDefault(x => x.UserName == userName);
+					await Clients.Client(client.ConnectionId).SendAsync("receiveMessage", message, sender.UserName);
+				}
+			}
+		}
+
+		public async Task SendMessageToGroupAsync(string message, string groupName)
+		{
+			Group group = GroupData.AllGroups.FirstOrDefault(x => x.GroupName == groupName);
+
+			var isMember = group.Clients.Any(x => x.ConnectionId == Context.ConnectionId);
+
+			if (!string.IsNullOrEmpty(groupName) && isMember)
+			{
+				groupName = groupName.Trim();
+
+				await Clients.Group(groupName).SendAsync("receiveMessage", message, ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId).UserName);
 			}
 			else
 			{
-				Client client = ClientData.AllClients.FirstOrDefault(x => x.UserName == userName);
-				await Clients.Client(client.ConnectionId).SendAsync("receiveMessage", message, sender.UserName);
+				await Clients.Caller.SendAsync("notMemberMessage", "You are not a member of this group. Please join first.");
+
 			}
 		}
 

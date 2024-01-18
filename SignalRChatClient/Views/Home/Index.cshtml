@@ -47,7 +47,8 @@
 			<textarea class="form-control disabled" id="msgArea" rows="2"></textarea>
 			<br />
 			<div style="display:flex; justify-content: right;">
-				<button type="button" class="btn btn-light btn-outline-dark" id="sendMsgBtn" disabled>Send</button>
+				<button type="button" class="btn btn-light btn-outline-dark" id="sendMsgBtn" disabled>Send To User</button>&nbsp;&nbsp;
+				<button type="button" class="btn btn-light btn-outline-dark" id="sendGroupMsgBtn" disabled>Send To Group</button>
 			</div>
 		</div>
 	</div>
@@ -63,7 +64,10 @@
 			<a href="#" class="list-group-item list-group-item-action rooms" data-toggle="list" role="tab">All</a>
 			<div id="_rooms"></div>
 		</div>
-		<button id="joinRoomBtn" type="button" class="btn btn-light btn-outline-dark" disabled>Join Selected Room</button>
+		<br />
+		<div class="center-div">
+			<button id="joinRoomBtn" type="button" class="btn btn-light btn-outline-dark" disabled>Join Selected Room</button>
+		</div>
 	</div>
 </div>
 
@@ -131,11 +135,13 @@
 
 			// receive sent messages through hub
 			hubConnection.on("receiveMessage", (message, username) => {
-				const msg = $(".message").clone();
-				msg.removeClass("message");
-				msg.find("p").html(message);
-				msg.find("div h5")[0].innerHTML = username;
-				$(".messages").append(msg);
+				if (username != $("#userName").val()) {
+					const msg = $(".message").clone();
+					msg.removeClass("message");
+					msg.find("p").html(message);
+					msg.find("div h5")[0].innerHTML = username;
+					$(".messages").append(msg);
+				}
 			});
 
 			// send new room's name to hub
@@ -168,14 +174,34 @@
 
 				console.log("room name : " + roomName);
 
-				if(roomName == "All") {
+				if (roomName == "All") {
 					alert("Please select a room!");
 				}
-				else
-				{
+				else {
 					hubConnection.invoke("AddClientToGroup", roomName).catch(error => console.log(error));
 				}
 
+			});
+
+			// send message and receiver group name to hub
+			$("#sendGroupMsgBtn").click(() => {
+				const groupName = $(".rooms.active").first().html();
+				const message = $("#msgArea").val();
+				if (roomName == "All") {
+					alert("Please select a room!");
+				}
+				else {
+					hubConnection.invoke("SendMessageToGroupAsync", message, groupName).catch(error => console.log(error));
+					const msg = $(".message").clone();
+					msg.removeClass("message");
+					msg.find("p").html(message);
+					msg.find("div h5")[1].innerHTML = "You";
+					$(".messages").append(msg);
+				}
+			});
+
+			hubConnection.on("notMemberMessage", msg => {
+				alert(msg);
 			});
 
 		});
