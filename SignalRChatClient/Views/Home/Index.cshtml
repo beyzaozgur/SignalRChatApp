@@ -158,6 +158,7 @@
 				}
 			});
 
+			// show sender message if client is in group
 			hubConnection.on("callerShowMsg", isMember => {
 
 				const groupName = $(".rooms.active").first().html();
@@ -223,8 +224,19 @@
 				}
 			});
 
+			// send alert if a non-member user tries to send a message to group 
 			hubConnection.on("notMemberMessage", msg => {
 				alert(msg);
+			});
+
+			// send alert if users try to join a group they are already in
+			hubConnection.on("alreadyMemberAlert", groupName => {
+				alert(`You are already a member of "${groupName}" chat room.`);
+			});
+
+			// send alert if user successfully joins the chat room
+			hubConnection.on("memberAddedAlert", groupName => {
+				alert(`You have successfully become a member of "${groupName}" chat room.`);
 			});
 
 		});

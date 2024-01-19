@@ -114,6 +114,11 @@ namespace SignalRChatServer.Hubs
 			{
 				group.Clients.Add(client);
 				await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+				await Clients.Caller.SendAsync("memberAddedAlert", groupName);
+			}
+			else
+			{
+				await Clients.Caller.SendAsync("alreadyMemberAlert", groupName);
 			}
 		}
 
