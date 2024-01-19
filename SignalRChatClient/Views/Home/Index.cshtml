@@ -158,6 +158,20 @@
 				}
 			});
 
+			hubConnection.on("callerShowMsg", isMember => {
+
+				const groupName = $(".rooms.active").first().html();
+				const senderMsg = $("#msgArea").val();
+
+				if (isMember) {
+					const msg = $(".message").clone();
+					msg.removeClass("message");
+					msg.find("p").html(senderMsg);
+					msg.find("div h5")[1].innerHTML = "You";
+					$(".messages").append(msg);
+				}
+			});
+
 			// send new room's name to hub
 			$("#addRoomBtn").click(() => {
 				const roomName = $("#roomName").val();
@@ -206,11 +220,6 @@
 				}
 				else {
 					hubConnection.invoke("SendMessageToGroupAsync", message, groupName).catch(error => console.log(error));
-					const msg = $(".message").clone();
-					msg.removeClass("message");
-					msg.find("p").html(message);
-					msg.find("div h5")[1].innerHTML = "You";
-					$(".messages").append(msg);
 				}
 			});
 

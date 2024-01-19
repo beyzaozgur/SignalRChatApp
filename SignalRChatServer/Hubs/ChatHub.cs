@@ -71,6 +71,7 @@ namespace SignalRChatServer.Hubs
 				groupName = groupName.Trim();
 
 				await Clients.Group(groupName).SendAsync("receiveMessage", message, ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId).UserName);
+				await Clients.Caller.SendAsync("callerShowMsg", isMember);
 			}
 			else
 			{
