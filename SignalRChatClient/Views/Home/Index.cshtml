@@ -88,20 +88,34 @@
 			$("#joinBtn").click(() => {
 				const userName = $("#userName").val();
 				hubConnection.invoke("GetUserName", userName).catch(error => console.log(error));
-				$(".disabled").removeAttr("disabled");
-				$(".btn").removeAttr("disabled");
-				$("#joinBtn").prop("disabled", true);
-				$("#userName").prop("disabled", true);
+			});
+
+			// if user name or room name already exists notify the user
+			hubConnection.on("alreadyExitsAlert", name => {
+				alert(`Name ${name} already exists. Please select another one.`);
 			});
 
 			// get new client's name from hub and show a notification message on screen
 			hubConnection.on("userJoined", userName => {
-				$("#userActivityInfo").html(userName + " has just joined!")
+				$("#userActivityInfo").html(userName + " has just joined!");
 				$("#userActivityInfo").fadeIn(5000, () => {
 					setTimeout(() => {
 						$("#userActivityInfo").fadeOut(2000);
 					}, 2000);
-				})
+				});
+			});
+
+			// make operations available if user name is unique
+			hubConnection.on("callerJoined", isValid => {
+				console.log("isValid:", isValid);
+				console.log(typeof isValid);
+
+				if (isValid) {
+					$(".disabled").removeAttr("disabled");
+					$(".btn").removeAttr("disabled");
+					$("#joinBtn").prop("disabled", true);
+					$("#userName").prop("disabled", true);
+				}
 			});
 
 			// get all users from hub

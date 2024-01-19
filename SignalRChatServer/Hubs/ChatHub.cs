@@ -8,15 +8,27 @@ namespace SignalRChatServer.Hubs
 	{
 		public async Task GetUserName(string userName)
 		{
-			Client client = new Client
-			{
-				ConnectionId = Context.ConnectionId,
-				UserName = userName
-			};
+			var isExisted = ClientData.AllClients.Any(x => x.UserName == userName);
 
-			ClientData.AllClients.Add(client);
-			await Clients.Others.SendAsync("userJoined", userName);
-			await Clients.All.SendAsync("getClients", ClientData.AllClients);
+			if(isExisted)
+			{
+				await Clients.Caller.SendAsync("alreadyExitsAlert", userName);
+			}
+			else
+			{
+				Client client = new Client
+				{
+					ConnectionId = Context.ConnectionId,
+					UserName = userName
+				};
+
+				var isValid = true;
+
+				ClientData.AllClients.Add(client);
+				await Clients.Others.SendAsync("userJoined", userName);
+				await Clients.Caller.SendAsync("callerJoined", isValid);
+				await Clients.All.SendAsync("getClients", ClientData.AllClients);
+			}
 		}
 
 		public async Task SendMessageAsync(string message, string userName)
