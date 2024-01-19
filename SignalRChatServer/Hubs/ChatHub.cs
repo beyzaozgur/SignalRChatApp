@@ -6,6 +6,7 @@ namespace SignalRChatServer.Hubs
 {
 	public class ChatHub : Hub
 	{
+		// get user name from client, notify other users & list all users
 		public async Task GetUserName(string userName)
 		{
 			var isExisted = ClientData.AllClients.Any(x => x.UserName == userName);
@@ -25,12 +26,19 @@ namespace SignalRChatServer.Hubs
 				var isValid = true;
 
 				ClientData.AllClients.Add(client);
+
+				// notify other users
 				await Clients.Others.SendAsync("userJoined", userName);
+
+				// enable disabled operations 
 				await Clients.Caller.SendAsync("callerJoined", isValid);
+
+				// list all users
 				await Clients.All.SendAsync("getClients", ClientData.AllClients);
 			}
 		}
 
+		// get message and receiver name from client, send message
 		public async Task SendMessageAsync(string message, string userName)
 		{
 			if(!string.IsNullOrEmpty(userName))
@@ -51,6 +59,7 @@ namespace SignalRChatServer.Hubs
 			}
 		}
 
+		// get message and room name from client, send message
 		public async Task SendMessageToGroupAsync(string message, string groupName)
 		{
 			Group group = GroupData.AllGroups.FirstOrDefault(x => x.GroupName == groupName);
@@ -70,17 +79,28 @@ namespace SignalRChatServer.Hubs
 			}
 		}
 
+		// get room name from client and add group
 		public async Task AddGroup(string groupName)
 		{
-			await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+			var isExisted = GroupData.AllGroups.Any(x => x.GroupName == groupName);
 
-			Group group = new Group { GroupName = groupName };
-			group.Clients.Add(ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId));
+			if(isExisted)
+			{
+				await Clients.Caller.SendAsync("alreadyExitsAlert", groupName);
+			}
+			else
+			{
+				await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
-			GroupData.AllGroups.Add(group);
-			await Clients.All.SendAsync("getRooms", GroupData.AllGroups);
+				Group group = new Group { GroupName = groupName };
+				group.Clients.Add(ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId));
+
+				GroupData.AllGroups.Add(group);
+				await Clients.All.SendAsync("getRooms", GroupData.AllGroups);
+			}
 		}
 
+		// add client to selected group
 		public async Task AddClientToGroup(string groupName)
 		{
 			Client client = ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
@@ -96,6 +116,7 @@ namespace SignalRChatServer.Hubs
 			}
 		}
 
+		// send list of users in a specific group
 		public async Task GetClientsInGroup(string groupName)
 		{
 			Group group = GroupData.AllGroups.FirstOrDefault(x => x.GroupName == groupName);
