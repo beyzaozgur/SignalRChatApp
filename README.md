@@ -12,6 +12,8 @@ A simple chat application using [SignalR](https://docs.microsoft.com/en-us/aspne
 - Display members of the selected group.
 - Real-time notifications for new user joins.
 
+![Chat App Screenshot](https://github.com/beyzaozgur/SignalRChatApp/blob/master/SignalRChatApp.png "Chat App Screenshot")
+
 ## Technologies Used
 
 - ASP.NET Core
@@ -75,7 +77,7 @@ This project does not use a database. Data is stored within classes in the appli
 
 ## Folder Structure
 
-- **SignalRCHatClient**: Contains the client-side code (HTML, JavaScript, CSS, Bootstrap).
+- **SignalRChatClient**: Contains the client-side code (HTML, JavaScript, CSS, Bootstrap).
 - **/Hubs**: SignalR hub for real-time communication.
 - **/Models**: Data models and view models.
 - **/Data**: Data storage models.
@@ -86,4 +88,4 @@ This project does not use a database. Data is stored within classes in the appli
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/beyzaozgur/SignalRChatApp/blob/master/LICENSE.txt) file for details.
