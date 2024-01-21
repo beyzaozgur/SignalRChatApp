@@ -50,11 +50,13 @@ namespace SignalRChatServer.Hubs
 				if (userName == "All")
 				{
 					await Clients.Others.SendAsync("receiveMessage", message, sender.UserName);
+					await Clients.Caller.SendAsync("callerShowMsg", true);
 				}
 				else
 				{
 					Client client = ClientData.AllClients.FirstOrDefault(x => x.UserName == userName);
 					await Clients.Client(client.ConnectionId).SendAsync("receiveMessage", message, sender.UserName);
+					await Clients.Caller.SendAsync("callerShowMsg", true);
 				}
 			}
 		}
@@ -62,21 +64,28 @@ namespace SignalRChatServer.Hubs
 		// get message and room name from client, send message
 		public async Task SendMessageToGroupAsync(string message, string groupName)
 		{
-			Group group = GroupData.AllGroups.FirstOrDefault(x => x.GroupName == groupName);
-
-			var isMember = group.Clients.Any(x => x.ConnectionId == Context.ConnectionId);
-
-			if (!string.IsNullOrEmpty(groupName) && isMember)
+			if (!string.IsNullOrEmpty(groupName) && groupName != "All")
 			{
 				groupName = groupName.Trim();
 
-				await Clients.Group(groupName).SendAsync("receiveMessage", message, ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId).UserName);
-				await Clients.Caller.SendAsync("callerShowMsg", isMember);
+				Group group = GroupData.AllGroups.FirstOrDefault(x => x.GroupName == groupName);
+
+				var isMember = group.Clients.Any(x => x.ConnectionId == Context.ConnectionId);
+
+				if (isMember)
+				{
+					await Clients.Group(groupName).SendAsync("receiveMessage", message, ClientData.AllClients.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId).UserName);
+					await Clients.Caller.SendAsync("callerShowMsg", isMember);
+				}
+				else
+				{
+					await Clients.Caller.SendAsync("notMemberMessage", "You are not a member of this group. Please join first.");
+
+				}
 			}
 			else
 			{
-				await Clients.Caller.SendAsync("notMemberMessage", "You are not a member of this group. Please join first.");
-
+				await Clients.Caller.SendAsync("notMemberMessage", "Please select a room.");
 			}
 		}
 
